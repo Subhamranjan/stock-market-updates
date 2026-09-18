@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { getQuote } from "./actions";
-import { getHistory } from "./actions";
+//import { getHistory } from "./actions";
 
 
 const REFRESH_INTERVAL = 300000;
@@ -157,49 +157,6 @@ const REFERENCE_CLOCKS = [
 ];
 
 
-
-const NIFTY_COMPARE_GROUPS = {
-    Sectoral: [
-        { label: "Nifty Auto", ticker: "^CNXAUTO" },
-        { label: "Nifty Bank", ticker: "^NSEBANK" },
-        { label: "Nifty IT", ticker: "^CNXIT" },
-        { label: "Nifty Pharma", ticker: "^CNXPHARMA" },
-        { label: "Nifty FMCG", ticker: "^CNXFMCG" },
-        { label: "Nifty Metal", ticker: "^CNXMETAL" },
-        { label: "Nifty Energy", ticker: "^CNXENERGY" },
-        { label: "Nifty Realty", ticker: "^CNXREALTY" },
-        { label: "Nifty Infra", ticker: "^CNXINFRA" },
-        { label: "Nifty PSU Bank", ticker: "^CNXPSUBANK" },
-        { label: "Nifty Media", ticker: "^CNXMEDIA" },
-        { label: "Nifty Finance", ticker: "^CNXFINANCE" },
-    ],
-    Thematic: [
-        { label: "Nifty MNC", ticker: "^CNXMNC" },
-        { label: "Nifty PSE", ticker: "^CNXPSE" },
-        { label: "Nifty CPSE", ticker: "^CNXCPSE" },
-        { label: "Nifty Services", ticker: "^CNXSERVICE" },
-        { label: "Nifty Consumption", ticker: "^CNXCONSUMPTION" },
-        { label: "Nifty Mfg", ticker: "^CNXMFG" },
-    ],
-    "Broad Market": [
-        { label: "Sensex", ticker: "^BSESN" },
-        { label: "Nifty 100", ticker: "^CNX100" },
-        { label: "Nifty 500", ticker: "^CNX500" },
-        { label: "Nifty Midcap 50", ticker: "^NSEMDCP50" },
-        { label: "Nifty Next 50", ticker: "^NSMIDCP" },
-        { label: "Nifty Smallcap", ticker: "^CNXSC" },
-        { label: "India VIX", ticker: "^INDIAVIX" },
-    ],
-};
-
-const RANGES = [
-    { label: "1M", value: "1mo", interval: "1d" },
-    { label: "3M", value: "3mo", interval: "1d" },
-    { label: "6M", value: "6mo", interval: "1d" },
-    { label: "1Y", value: "1y", interval: "1d" },
-    { label: "2Y", value: "2y", interval: "1wk" },
-    { label: "5Y", value: "5y", interval: "1wk" },
-];
 
 
 const OPTION_SYMBOLS = [
@@ -361,12 +318,23 @@ function MarketBadge({ clock }) {
 
 function ClockSelector({ visible, onToggle, total }) {
     const [open, setOpen] = useState(false);
+    const btnRef = useRef(null);
+    const [pos, setPos] = useState({ top: 0, left: 0 });
+
+    const handleOpen = () => {
+        if (btnRef.current) {
+            const rect = btnRef.current.getBoundingClientRect();
+            setPos({ top: rect.bottom + 4, left: rect.left });
+        }
+        setOpen(v => !v);
+    };
 
     return (
-        <div className="relative">
+        <div className="relative flex-shrink-0">
             <button
-                onClick={() => setOpen(v => !v)}
-                className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-1.5"
+                ref={btnRef}
+                onClick={handleOpen}
+                className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-1.5 whitespace-nowrap"
             >
                 Clocks
                 <span className="text-[10px] text-gray-400">
@@ -375,8 +343,11 @@ function ClockSelector({ visible, onToggle, total }) {
             </button>
             {open && (
                 <>
-                    <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-                    <div className="absolute top-full z-20 mt-1 w-44 rounded-md border border-gray-200 bg-white shadow-lg py-1 max-h-72 overflow-y-auto">
+                    <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+                    <div
+                        className="fixed z-50 w-44 rounded-md border border-gray-200 bg-white shadow-lg py-1 max-h-72 overflow-y-auto"
+                        style={{ top: pos.top, left: pos.left }}
+                    >
                         {REFERENCE_CLOCKS.map((clock) => (
                             <label
                                 key={clock.label}
@@ -659,423 +630,1632 @@ function useResponsiveColumns(desktopColumns = 4) {
 }
 
 // -- Compare Chart --------------------------------------------------------
+const BASE_TICKER = "^NSEI";
+const BASE_LABEL = "Nifty 50";
 
+const INDEX_GROUP = {
+    Sectoral: [
+        { label: "Nifty Bank", ticker: "^NSEBANK" },
+        { label: "Nifty IT", ticker: "^CNXIT" },
+    ],
+
+    Financial: [],
+
+    Broad: [],
+};
+
+
+const NIFTY_COMPARE_GROUPS = {
+    Sectoral: [
+        { label: "Nifty Auto", ticker: "^CNXAUTO" },
+        { label: "Nifty Bank", ticker: "^NSEBANK" },
+        { label: "Nifty Pharma", ticker: "^CNXPHARMA" },
+        { label: "Nifty FMCG", ticker: "^CNXFMCG" },
+        { label: "Nifty Metal", ticker: "^CNXMETAL" },
+        { label: "Nifty Energy", ticker: "^CNXENERGY" },
+        { label: "Nifty Realty", ticker: "^CNXREALTY" },
+        { label: "Nifty Infra", ticker: "^CNXINFRA" },
+        { label: "Nifty PSU Bank", ticker: "^CNXPSUBANK" },
+        { label: "Nifty Media", ticker: "^CNXMEDIA" },
+        { label: "Nifty Finance", ticker: "^CNXFINANCE" },
+    ],
+    Thematic: [
+        { label: "Nifty MNC", ticker: "^CNXMNC" },
+        { label: "Nifty PSE", ticker: "^CNXPSE" },
+        { label: "Nifty CPSE", ticker: "^CNXCPSE" },
+        { label: "Nifty Services", ticker: "^CNXSERVICE" },
+        { label: "Nifty Consumption", ticker: "^CNXCONSUMPTION" },
+        { label: "Nifty Mfg", ticker: "^CNXMFG" },
+    ],
+    "Broad Market": [
+        { label: "Sensex", ticker: "^BSESN" },
+        { label: "Nifty 100", ticker: "^CNX100" },
+        { label: "Nifty 500", ticker: "^CNX500" },
+        { label: "Nifty Midcap 50", ticker: "^NSEMDCP50" },
+        { label: "Nifty Next 50", ticker: "^NSMIDCP" },
+        { label: "Nifty Smallcap", ticker: "^CNXSC" },
+        { label: "India VIX", ticker: "^INDIAVIX" },
+    ],
+};
+
+const INDEX_RANGES = [
+    { label: "1M", value: "1mo", },
+    { label: "3M", value: "3mo", },
+    { label: "6M", value: "6mo", },
+    { label: "1Y", value: "1y", },
+    { label: "2Y", value: "2y", },
+    { label: "5Y", value: "5y", },
+    { label: "10Y", value: "10y", },
+
+];
+
+const INDEX_LINECOLORS = [
+    "#2563eb",
+    "#dc2626",
+    "#16a34a",
+    "#9333ea",
+    "#ea580c",
+    "#0891b2",
+    "#db2777",
+    "#65a30d",
+];
+
+/*
+|--------------------------------------------------------------------------
+| Normalize Data
+|--------------------------------------------------------------------------
+|
+| Chart value = actual Close
+|
+*/
+
+function normalizeSeries(data) {
+    if (!Array.isArray(data) || data.length === 0) {
+        return [];
+    }
+
+    return data.map((row) => ({
+        date: row.date,
+        ticker: row.ticker,
+
+        open:
+            row.open !== null &&
+                row.open !== undefined
+                ? Number(row.open)
+                : null,
+
+        high:
+            row.high !== null &&
+                row.high !== undefined
+                ? Number(row.high)
+                : null,
+
+        low:
+            row.low !== null &&
+                row.low !== undefined
+                ? Number(row.low)
+                : null,
+
+        close:
+            row.close !== null &&
+                row.close !== undefined
+                ? Number(row.close)
+                : null,
+
+        sharesTraded:
+            row.sharesTraded !== null &&
+                row.sharesTraded !== undefined
+                ? Number(row.sharesTraded)
+                : null,
+
+        turnover:
+            row.turnover !== null &&
+                row.turnover !== undefined
+                ? Number(row.turnover)
+                : null,
+
+        // IMPORTANT:
+        // Y-axis uses actual Close
+        value:
+            row.close !== null &&
+                row.close !== undefined
+                ? Number(row.close)
+                : null,
+    }));
+}
+
+/*
+|--------------------------------------------------------------------------
+| Compare Chart
+|--------------------------------------------------------------------------
+*/
 function CompareChart({ onClose }) {
-    const [activeGroup, setActiveGroup] = useState("Sectoral");
-    const [selected, setSelected] = useState([]);       // array of ticker strings
-    const [range, setRange] = useState(RANGES[3]);      // default 1Y
-    const [seriesData, setSeriesData] = useState({});   // { ticker: [{date,value}] }
-    const [loading, setLoading] = useState({});         // { ticker: bool }
-    const [baseData, setBaseData] = useState([]);       // Nifty 50 data
-    const [baseLoading, setBaseLoading] = useState(true);
-    const [tooltip, setTooltip] = useState(null);
+    const [activeGroup, setActiveGroup] =
+        useState("Broad");
 
-    const BASE_TICKER = "^NSEI";
-    const BASE_LABEL = "Nifty 50";
+    const [selected, setSelected] =
+        useState([]);
 
-    // Load base (Nifty 50) on mount or range change
+    const [range, setRange] =
+        useState(INDEX_RANGES[3]);
+
+    const [seriesData, setSeriesData] =
+        useState({});
+
+    const [baseData, setBaseData] =
+        useState([]);
+
+    const [loading, setLoading] =
+        useState(false);
+
+    const [baseLoading, setBaseLoading] =
+        useState(false);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Load Base Index
+    |--------------------------------------------------------------------------
+    */
+
     useEffect(() => {
-        setBaseLoading(true);
-        getHistory(BASE_TICKER, range.value, range.interval).then(data => {
-            setBaseData(normalize(data));
-            setBaseLoading(false);
-        });
-        // Reload all selected on range change
-        selected.forEach(ticker => loadSeries(ticker));
+        let cancelled = false;
+
+        async function loadBase() {
+            setBaseLoading(true);
+
+            try {
+                const response = await fetch(
+                    `/api/index-history?ticker=${encodeURIComponent(
+                        BASE_TICKER
+                    )}&range=${range.value}`,
+                    {
+                        cache: "no-store",
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Failed to load base index"
+                    );
+                }
+
+                const data =
+                    await response.json();
+
+                if (!cancelled) {
+                    setBaseData(
+                        normalizeSeries(data)
+                    );
+                }
+            } catch (error) {
+                console.error(
+                    "Base index error:",
+                    error
+                );
+
+                if (!cancelled) {
+                    setBaseData([]);
+                }
+            } finally {
+                if (!cancelled) {
+                    setBaseLoading(false);
+                }
+            }
+        }
+
+        loadBase();
+
+        return () => {
+            cancelled = true;
+        };
     }, [range]);
 
-    const loadSeries = async (ticker) => {
-        setLoading(prev => ({ ...prev, [ticker]: true }));
-        const data = await getHistory(ticker, range.value, range.interval);
-        setSeriesData(prev => ({ ...prev, [ticker]: normalize(data) }));
-        setLoading(prev => ({ ...prev, [ticker]: false }));
-    };
+    /*
+    |--------------------------------------------------------------------------
+    | Load Selected Indices
+    |--------------------------------------------------------------------------
+    */
 
-    const toggleSeries = (ticker) => {
-        if (selected.includes(ticker)) {
-            setSelected(prev => prev.filter(t => t !== ticker));
-        } else {
-            setSelected(prev => [...prev, ticker]);
-            if (!seriesData[ticker]) loadSeries(ticker);
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadSelectedIndices() {
+            if (selected.length === 0) {
+                setSeriesData({});
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                const results =
+                    await Promise.all(
+                        selected.map(
+                            async (ticker) => {
+                                const response =
+                                    await fetch(
+                                        `/api/index-history?ticker=${encodeURIComponent(
+                                            ticker
+                                        )}&range=${range.value}`,
+                                        {
+                                            cache: "no-store",
+                                        }
+                                    );
+
+                                if (!response.ok) {
+                                    throw new Error(
+                                        `Failed to load ${ticker}`
+                                    );
+                                }
+
+                                const data =
+                                    await response.json();
+
+                                return {
+                                    ticker,
+                                    data: normalizeSeries(
+                                        data
+                                    ),
+                                };
+                            }
+                        )
+                    );
+
+                if (cancelled) {
+                    return;
+                }
+
+                const nextData = {};
+
+                for (const item of results) {
+                    nextData[item.ticker] =
+                        item.data;
+                }
+
+                setSeriesData(nextData);
+            } catch (error) {
+                console.error(
+                    "Selected index error:",
+                    error
+                );
+            } finally {
+                if (!cancelled) {
+                    setLoading(false);
+                }
+            }
         }
-    };
 
-    // Merge all series into one array keyed by date
-    const mergedData = useMemo(() => {
-        const dateMap = {};
-        // Add base
-        baseData.forEach(d => {
-            dateMap[d.date] = { date: d.date, [BASE_TICKER]: d.value };
-        });
-        // Add selected
-        selected.forEach(ticker => {
-            (seriesData[ticker] ?? []).forEach(d => {
-                if (!dateMap[d.date]) dateMap[d.date] = { date: d.date };
-                dateMap[d.date][ticker] = d.value;
-            });
-        });
-        return Object.values(dateMap).sort((a, b) => a.date.localeCompare(b.date));
-    }, [baseData, seriesData, selected]);
+        loadSelectedIndices();
 
-    // Get label for ticker
-    const getLabel = (ticker) => {
-        if (ticker === BASE_TICKER) return BASE_LABEL;
-        for (const group of Object.values(NIFTY_COMPARE_GROUPS)) {
-            const found = group.find(i => i.ticker === ticker);
-            if (found) return found.label;
+        return () => {
+            cancelled = true;
+        };
+    }, [selected, range]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Toggle Index
+    |--------------------------------------------------------------------------
+    */
+
+    function toggleIndex(ticker) {
+        // Base index cannot be selected again
+        if (ticker === BASE_TICKER) {
+            return;
         }
+
+        setSelected((current) => {
+            if (current.includes(ticker)) {
+                return current.filter(
+                    (item) => item !== ticker
+                );
+            }
+
+            return [...current, ticker];
+        });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Clear All
+    |--------------------------------------------------------------------------
+    */
+
+    function clearAll() {
+        setSelected([]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Get Index Label
+    |--------------------------------------------------------------------------
+    */
+
+    function getLabel(ticker) {
+        if (ticker === BASE_TICKER) {
+            return BASE_LABEL;
+        }
+
+        for (const group of Object.values(
+            INDEX_GROUP
+        )) {
+            const index = group.find(
+                (item) =>
+                    item.ticker === ticker
+            );
+
+            if (index) {
+                return index.label;
+            }
+        }
+
         return ticker;
-    };
+    }
 
-    // All lines to draw
-    const allLines = [BASE_TICKER, ...selected];
+    /*
+    |--------------------------------------------------------------------------
+    | Merge Data
+    |--------------------------------------------------------------------------
+    */
 
-    // Last values for legend
-    const lastRow = mergedData[mergedData.length - 1] ?? {};
+    const mergedData = useMemo(() => {
+        const allSeries = {
+            [BASE_TICKER]: baseData,
+            ...seriesData,
+        };
+
+        const dates = new Set();
+
+        Object.values(allSeries).forEach(
+            (series) => {
+                if (!Array.isArray(series)) {
+                    return;
+                }
+
+                series.forEach((row) => {
+                    if (row.date) {
+                        dates.add(row.date);
+                    }
+                });
+            }
+        );
+
+        const sortedDates = [...dates].sort();
+
+        return sortedDates.map((date) => {
+            const point = {
+                date,
+            };
+
+            Object.entries(allSeries).forEach(
+                ([ticker, series]) => {
+                    const row = series?.find(
+                        (item) =>
+                            item.date === date
+                    );
+
+                    point[ticker] =
+                        row?.value ?? null;
+                }
+            );
+
+            return point;
+        });
+    }, [baseData, seriesData]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Chart Series
+    |--------------------------------------------------------------------------
+    */
+
+    const chartSeries = useMemo(() => {
+        return [
+            {
+                ticker: BASE_TICKER,
+                label: BASE_LABEL,
+                color: INDEX_LINECOLORS[0],
+            },
+
+            ...selected.map(
+                (ticker, index) => ({
+                    ticker,
+                    label: getLabel(ticker),
+                    color:
+                        INDEX_LINECOLORS[
+                        (index + 1) %
+                        INDEX_LINECOLORS.length
+                        ],
+                })
+            ),
+        ];
+    }, [selected]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Raw Data Lookup
+    |--------------------------------------------------------------------------
+    */
+
+    function getSeriesData(ticker, date) {
+        if (ticker === BASE_TICKER) {
+            return baseData.find(
+                (row) =>
+                    row.date === date
+            );
+        }
+
+        return seriesData[
+            ticker
+        ]?.find(
+            (row) =>
+                row.date === date
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Latest Close Values
+    |--------------------------------------------------------------------------
+    */
+
+    const latestValues = useMemo(() => {
+        const result = {};
+
+        for (const series of chartSeries) {
+            const data =
+                series.ticker ===
+                    BASE_TICKER
+                    ? baseData
+                    : seriesData[
+                    series.ticker
+                    ];
+
+            if (
+                !data ||
+                data.length === 0
+            ) {
+                result[series.ticker] =
+                    null;
+
+                continue;
+            }
+
+            const validRows =
+                data.filter(
+                    (row) =>
+                        row.close !==
+                        null &&
+                        row.close !==
+                        undefined
+                );
+
+            result[series.ticker] =
+                validRows.length > 0
+                    ? validRows[
+                        validRows.length -
+                        1
+                    ].close
+                    : null;
+        }
+
+        return result;
+    }, [
+        chartSeries,
+        baseData,
+        seriesData,
+    ]);
+
+    const percentageChanges = useMemo(() => {
+        const result = {};
+
+        for (const series of chartSeries) {
+            const data =
+                series.ticker === BASE_TICKER
+                    ? baseData
+                    : seriesData[series.ticker];
+
+            if (!data || data.length < 2) {
+                result[series.ticker] = null;
+                continue;
+            }
+
+            const validRows = data.filter(
+                (row) =>
+                    row.close !== null &&
+                    row.close !== undefined &&
+                    Number.isFinite(Number(row.close))
+            );
+
+            if (validRows.length < 2) {
+                result[series.ticker] = null;
+                continue;
+            }
+
+            const firstClose = Number(
+                validRows[0].close
+            );
+
+            const latestClose = Number(
+                validRows[validRows.length - 1].close
+            );
+
+            if (firstClose === 0) {
+                result[series.ticker] = null;
+                continue;
+            }
+
+            result[series.ticker] =
+                ((latestClose - firstClose) /
+                    firstClose) *
+                100;
+        }
+
+        return result;
+    }, [
+        chartSeries,
+        baseData,
+        seriesData,
+    ]);
+    /*
+    |--------------------------------------------------------------------------
+    | Current Group
+    |--------------------------------------------------------------------------
+    */
+
+    const currentGroup =
+        INDEX_GROUP[activeGroup] || [];
+
+    const isLoading =
+        baseLoading || loading;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Render
+    |--------------------------------------------------------------------------
+    */
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div className="rounded-2xl shadow-2xl flex flex-col bg-white border border-gray-200 w-[96vw] h-[92vh] overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-white ">
+            {/* Header */}
+            <div className="flex h-16 items-center justify-between border-b border-zinc-200 px-5 dark:border-zinc-800">
+                <div>
+                    <h1 className="text-lg font-semibold">
+                        📊 Nifty 50 — Compare Chart
+                    </h1>
 
-                {/* Header */}
-                <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200">
-                    <div className="flex items-center gap-3">
-                        <span className="font-bold text-gray-900">📊 Nifty 50 — Compare Chart</span>
-                        {selected.length > 0 && (
-                            <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">
-                                +{selected.length} indices
-                            </span>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {/* Range selector */}
-                        <div className="flex rounded-md overflow-hidden border border-gray-300 text-xs font-medium">
-                            {RANGES.map(r => (
-                                <button
-                                    key={r.value}
-                                    onClick={() => setRange(r)}
-                                    className={`px-2.5 py-1.5 transition-colors ${range.value === r.value
-                                        ? "bg-blue-500 text-white"
-                                        : "bg-white text-gray-600 hover:bg-gray-50"
-                                        }`}
-                                >
-                                    {r.label}
-                                </button>
-                            ))}
-                        </div>
-                        {selected.length > 0 && (
-                            <button
-                                onClick={() => setSelected([])}
-                                className="text-xs px-3 py-1.5 rounded-md border border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
-                            >
-                                Clear all
-                            </button>
-                        )}
-                        <button
-                            onClick={onClose}
-                            className="w-7 h-7 rounded-md border border-gray-300 text-gray-400 hover:text-red-500 flex items-center justify-center text-lg"
-                        >×</button>
-                    </div>
+                    <p className="text-xs text-zinc-500">
+                        Compare index closing prices
+                    </p>
                 </div>
 
-                <div className="flex flex-1 overflow-hidden">
-
-                    {/* Sidebar */}
-                    <div className="w-52 flex flex-col border-r border-gray-200 bg-gray-50 overflow-hidden">
-
-                        {/* Base badge */}
-                        <div className="px-3 py-2 border-b border-gray-200">
-                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Base Index</p>
-                            <div className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-blue-50 border border-blue-200">
-                                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: LINE_COLORS[0] }} />
-                                <span className="text-xs font-semibold text-blue-700">Nifty 50</span>
-                                {lastRow[BASE_TICKER] !== undefined && (
-                                    <span className={`ml-auto text-[11px] font-bold ${lastRow[BASE_TICKER] >= 0 ? "text-green-600" : "text-red-500"}`}>
-                                        {lastRow[BASE_TICKER] >= 0 ? "+" : ""}{lastRow[BASE_TICKER]}%
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Group tabs */}
-                        <div className="flex border-b border-gray-200">
-                            {Object.keys(NIFTY_COMPARE_GROUPS).map(g => (
+                <div className="flex items-center gap-2">
+                    {/* Range */}
+                    <div className="flex rounded-lg border border-zinc-200 p-1 dark:border-zinc-800">
+                        {INDEX_RANGES.map(
+                            (item) => (
                                 <button
-                                    key={g}
-                                    onClick={() => setActiveGroup(g)}
-                                    className={`flex-1 py-1.5 text-[9px] font-semibold transition-colors ${activeGroup === g
-                                        ? "border-b-2 border-blue-500 text-blue-600"
-                                        : "text-gray-400 hover:text-gray-600"
+                                    key={
+                                        item.value
+                                    }
+                                    onClick={() =>
+                                        setRange(
+                                            item
+                                        )
+                                    }
+                                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${range.value ===
+                                        item.value
+                                        ? "bg-zinc-900 text-white dark:bg-white dark:text-black"
+                                        : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900"
                                         }`}
                                 >
-                                    {g === "Broad Market" ? "Broad" : g}
+                                    {
+                                        item.label
+                                    }
                                 </button>
-                            ))}
-                        </div>
-
-                        {/* Index list */}
-                        <div className="flex-1 overflow-y-auto py-1">
-                            {NIFTY_COMPARE_GROUPS[activeGroup].map((item, i) => {
-                                const isSelected = selected.includes(item.ticker);
-                                const colorIdx = selected.indexOf(item.ticker) + 1;
-                                const color = isSelected ? LINE_COLORS[colorIdx % LINE_COLORS.length] : undefined;
-                                const pct = isSelected && lastRow[item.ticker] !== undefined
-                                    ? lastRow[item.ticker]
-                                    : null;
-
-                                return (
-                                    <button
-                                        key={item.ticker}
-                                        onClick={() => toggleSeries(item.ticker)}
-                                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors ${isSelected
-                                            ? "bg-blue-50 text-blue-700"
-                                            : "text-gray-600 hover:bg-gray-100"
-                                            }`}
-                                    >
-                                        <span className="w-3 h-3 rounded flex-shrink-0 border flex items-center justify-center text-[9px]"
-                                            style={isSelected ? { background: color, borderColor: color, color: "#fff" } : { borderColor: "#d1d5db" }}>
-                                            {isSelected ? "✓" : ""}
-                                        </span>
-                                        <span className="flex-1 truncate">{item.label}</span>
-                                        {loading[item.ticker] && (
-                                            <span className="text-[9px] text-gray-400">...</span>
-                                        )}
-                                        {pct !== null && !loading[item.ticker] && (
-                                            <span className={`text-[10px] font-bold ${pct >= 0 ? "text-green-600" : "text-red-500"}`}>
-                                                {pct >= 0 ? "+" : ""}{pct}%
-                                            </span>
-                                        )}
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        {/* Selected summary */}
-                        {selected.length > 0 && (
-                            <div className="border-t border-gray-200 px-3 py-2">
-                                <p className="text-[10px] font-semibold text-gray-400 uppercase mb-1">Selected ({selected.length})</p>
-                                {selected.map((ticker, i) => (
-                                    <div key={ticker} className="flex items-center gap-1.5 py-0.5">
-                                        <span className="w-2 h-2 rounded-full flex-shrink-0"
-                                            style={{ background: LINE_COLORS[(i + 1) % LINE_COLORS.length] }} />
-                                        <span className="text-[11px] text-gray-600 truncate flex-1">{getLabel(ticker)}</span>
-                                        <button onClick={() => toggleSeries(ticker)}
-                                            className="text-gray-300 hover:text-red-500 text-sm">×</button>
-                                    </div>
-                                ))}
-                            </div>
+                            )
                         )}
                     </div>
 
-                    {/* Chart area */}
-                    <div className="flex-1 flex flex-col overflow-hidden p-3">
+                    {/* Clear */}
+                    <button
+                        onClick={clearAll}
+                        className="rounded-lg border border-zinc-200 px-3 py-2 text-xs hover:bg-zinc-100 dark:border-zinc-800 dark:hover:bg-zinc-900"
+                    >
+                        Clear All
+                    </button>
 
-                        {baseLoading ? (
-                            <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
-                                Loading Nifty 50 data...
+                    {/* Close */}
+                    <button
+                        onClick={onClose}
+                        className="rounded-lg border border-zinc-200 px-3 py-2 text-sm hover:bg-zinc-100 dark:border-zinc-800 dark:hover:bg-zinc-900"
+                    >
+                        ✕
+                    </button>
+                </div>
+            </div>
+
+            {/* Main */}
+            <div className="flex h-[calc(100vh-64px)]">
+                {/* Sidebar */}
+                <aside className="w-64 shrink-0 overflow-y-auto border-r border-zinc-200 dark:border-zinc-800">
+                    {/* Base */}
+                    <div className="border-b border-zinc-200 p-4 dark:border-zinc-800">
+                        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                            Base Index
+                        </div>
+
+                        <div className="flex items-center justify-between rounded-lg bg-blue-50 px-3 py-2 dark:bg-blue-950/30">
+                            <span className="text-sm font-medium">
+                                {BASE_LABEL}
+                            </span>
+
+                            <span className="text-xs text-zinc-500">
+                                Base
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Groups */}
+                    <div className="flex border-b border-zinc-200 dark:border-zinc-800">
+                        {Object.keys(
+                            INDEX_GROUP
+                        ).map(
+                            (group) => (
+                                <button
+                                    key={group}
+                                    onClick={() =>
+                                        setActiveGroup(
+                                            group
+                                        )
+                                    }
+                                    className={`flex-1 px-2 py-3 text-xs font-medium ${activeGroup ===
+                                        group
+                                        ? "border-b-2 border-blue-600 text-blue-600"
+                                        : "text-zinc-500"
+                                        }`}
+                                >
+                                    {group}
+                                </button>
+                            )
+                        )}
+                    </div>
+
+                    {/* Index List */}
+                    <div className="p-3">
+                        {currentGroup.length ===
+                            0 ? (
+                            <div className="rounded-lg border border-dashed border-zinc-300 p-4 text-center text-xs text-zinc-500 dark:border-zinc-700">
+                                No indices added yet.
                             </div>
                         ) : (
-                            <>
-                                {/* Legend */}
-                                <div className="flex flex-wrap gap-3 mb-2 px-1">
-                                    {allLines.map((ticker, i) => {
-                                        const pct = lastRow[ticker];
+                            <div className="space-y-1">
+                                {currentGroup.map(
+                                    (index) => {
+                                        const isBase =
+                                            index.ticker ===
+                                            BASE_TICKER;
+
+                                        const isSelected =
+                                            selected.includes(
+                                                index.ticker
+                                            );
+
                                         return (
-                                            <div key={ticker} className="flex items-center gap-1.5">
-                                                <span className="w-5 h-0.5 rounded-full inline-block" style={{ background: LINE_COLORS[i % LINE_COLORS.length] }} />
-                                                <span className="text-xs text-gray-600">{getLabel(ticker)}</span>
-                                                {pct !== undefined && (
-                                                    <span className={`text-xs font-bold ${pct >= 0 ? "text-green-600" : "text-red-500"}`}>
-                                                        ({pct >= 0 ? "+" : ""}{pct}%)
+                                            <button
+                                                key={
+                                                    index.ticker
+                                                }
+                                                disabled={
+                                                    isBase
+                                                }
+                                                onClick={() =>
+                                                    toggleIndex(
+                                                        index.ticker
+                                                    )
+                                                }
+                                                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition ${isBase
+                                                    ? "cursor-default border-2 text-black"
+                                                    : isSelected
+                                                        ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400"
+                                                        : "hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                                                    }`}
+                                            >
+                                                <span>
+                                                    {
+                                                        index.label
+                                                    }
+                                                </span>
+
+                                                {isBase ? (
+                                                    <span className="text-[10px]">
+                                                        BASE
+                                                    </span>
+                                                ) : (
+                                                    <span>
+                                                        {isSelected
+                                                            ? "✓"
+                                                            : "+"}
                                                     </span>
                                                 )}
-                                            </div>
+                                            </button>
                                         );
-                                    })}
-                                    <span className="text-[10px] text-gray-400 ml-auto self-center">% change from start — all indices normalized</span>
-                                </div>
-
-                                {/* Custom SVG chart */}
-                                <CustomLineChart
-                                    data={mergedData}
-                                    lines={allLines}
-                                    colors={LINE_COLORS}
-                                    getLabel={getLabel}
-                                />
-                            </>
+                                    }
+                                )}
+                            </div>
                         )}
                     </div>
-                </div>
+
+                    {/* Selected */}
+                    <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">
+                        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                            Selected
+                        </div>
+
+                        {selected.length ===
+                            0 ? (
+                            <p className="text-xs text-zinc-500">
+                                No additional indices selected.
+                            </p>
+                        ) : (
+                            <div className="space-y-2">
+                                {selected.map(
+                                    (
+                                        ticker,
+                                        index
+                                    ) => (
+                                        <div
+                                            key={
+                                                ticker
+                                            }
+                                            className="flex items-center justify-between text-xs"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <span
+                                                    className="h-2 w-2 rounded-full"
+                                                    style={{
+                                                        backgroundColor:
+                                                            INDEX_LINECOLORS[
+                                                            (index +
+                                                                1) %
+                                                            INDEX_LINECOLORS.length
+                                                            ],
+                                                    }}
+                                                />
+
+                                                <span>
+                                                    {getLabel(
+                                                        ticker
+                                                    )}
+                                                </span>
+                                            </div>
+
+                                            <button
+                                                onClick={() =>
+                                                    toggleIndex(
+                                                        ticker
+                                                    )
+                                                }
+                                                className="text-zinc-400 hover:text-red-500"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    )
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </aside>
+
+                {/* Chart */}
+                <main className="min-w-0 flex-1 p-5">
+                    {/* Legend */}
+                    <div className="mb-4 flex flex-wrap items-center gap-4"> {chartSeries.map((series) => (<div key={series.ticker} className="flex items-center gap-2 text-xs" > <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: series.color, }} /> <span> {series.label} </span> {latestValues[series.ticker] !== null && latestValues[series.ticker] !== undefined && (<span className="text-zinc-500"> {formatNumber(latestValues[series.ticker])} </span>)} </div>))} </div>
+
+                    {/* Chart Container */}
+                    <div className="relative h-[calc(100%-40px)] min-h-[400px] rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800">
+                        {isLoading && (
+                            <div className="absolute right-4 top-4 z-10 rounded-md bg-white px-3 py-1.5 text-xs text-zinc-500 shadow dark:bg-zinc-900">
+                                Loading...
+                            </div>
+                        )}
+
+                        {mergedData.length ===
+                            0 ? (
+                            <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+                                No data available.
+                            </div>
+                        ) : (
+                            <CustomLineChart
+                                data={
+                                    mergedData
+                                }
+                                series={
+                                    chartSeries
+                                }
+                                getSeriesData={
+                                    getSeriesData
+                                }
+                            />
+                        )}
+                    </div>
+                </main>
             </div>
         </div>
     );
 }
 
-// ── Custom SVG Line Chart ─────────────────────────────────────────────────────
+/*
+|--------------------------------------------------------------------------
+| Custom Line Chart
+|--------------------------------------------------------------------------
+*/
 
-function CustomLineChart({ data, lines, colors, getLabel }) {
-    const svgRef = useRef(null);
-    const [hoveredX, setHoveredX] = useState(null);
-    const [tooltipData, setTooltipData] = useState(null);
+function CustomLineChart({
+    data,
+    series,
+    getSeriesData,
+}) {
+    const containerRef =
+        useRef(null);
 
-    const W = 900, H = 400;
-    const PAD = { top: 20, right: 20, bottom: 40, left: 60 };
-    const chartW = W - PAD.left - PAD.right;
-    const chartH = H - PAD.top - PAD.bottom;
+    const [
+        dimensions,
+        setDimensions,
+    ] = useState({
+        width: 900,
+        height: 500,
+    });
 
-    const allValues = data.flatMap(d => lines.map(l => d[l]).filter(v => v !== undefined && v !== null));
-    const minV = Math.min(...allValues, 0);
-    const maxV = Math.max(...allValues, 0);
-    const rangeV = maxV - minV || 1;
+    const [hovered, setHovered] =
+        useState(null);
 
-    const xScale = (i) => PAD.left + (i / Math.max(data.length - 1, 1)) * chartW;
-    const yScale = (v) => PAD.top + chartH - ((v - minV) / rangeV) * chartH;
+    /*
+    |--------------------------------------------------------------------------
+    | Resize Observer
+    |--------------------------------------------------------------------------
+    */
 
-    // Y axis ticks
-    const yTicks = [];
-    const tickCount = 6;
-    for (let i = 0; i <= tickCount; i++) {
-        const v = minV + (rangeV / tickCount) * i;
-        yTicks.push(parseFloat(v.toFixed(1)));
+    useEffect(() => {
+        if (!containerRef.current) {
+            return;
+        }
+
+        const observer =
+            new ResizeObserver(
+                (entries) => {
+                    const rect =
+                        entries[0].contentRect;
+
+                    setDimensions({
+                        width: rect.width,
+                        height: rect.height,
+                    });
+                }
+            );
+
+        observer.observe(
+            containerRef.current
+        );
+
+        return () =>
+            observer.disconnect();
+    }, []);
+
+    const width =
+        dimensions.width;
+
+    const height =
+        dimensions.height;
+
+    const margin = {
+        top: 20,
+        right: 25,
+        bottom: 45,
+        left: 75,
+    };
+
+    const chartWidth =
+        width -
+        margin.left -
+        margin.right;
+
+    const chartHeight =
+        height -
+        margin.top -
+        margin.bottom;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Find Min / Max Close
+    |--------------------------------------------------------------------------
+    */
+
+    const values = [];
+
+    data.forEach((row) => {
+        series.forEach((item) => {
+            const value =
+                row[item.ticker];
+
+            if (
+                value !== null &&
+                value !== undefined &&
+                Number.isFinite(
+                    Number(value)
+                )
+            ) {
+                values.push(
+                    Number(value)
+                );
+            }
+        });
+    });
+
+    let minValue =
+        values.length > 0
+            ? Math.min(...values)
+            : 0;
+
+    let maxValue =
+        values.length > 0
+            ? Math.max(...values)
+            : 1;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Y Axis Padding
+    |--------------------------------------------------------------------------
+    */
+
+    const range =
+        maxValue - minValue;
+
+    const padding =
+        range > 0
+            ? range * 0.08
+            : Math.max(
+                Math.abs(
+                    maxValue
+                ) * 0.05,
+                1
+            );
+
+    minValue -= padding;
+    maxValue += padding;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Coordinate Functions
+    |--------------------------------------------------------------------------
+    */
+
+    function getX(index) {
+        if (data.length <= 1) {
+            return (
+                margin.left +
+                chartWidth / 2
+            );
+        }
+
+        return (
+            margin.left +
+            (index /
+                (data.length - 1)) *
+            chartWidth
+        );
     }
 
-    // X axis ticks — show ~6 dates
-    const xTickIdxs = [];
-    const step = Math.floor(data.length / 5);
-    for (let i = 0; i < data.length; i += step) xTickIdxs.push(i);
-    if (xTickIdxs[xTickIdxs.length - 1] !== data.length - 1) xTickIdxs.push(data.length - 1);
+    function getY(value) {
+        return (
+            margin.top +
+            ((maxValue - value) /
+                (maxValue - minValue)) *
+            chartHeight
+        );
+    }
 
-    // Build SVG path for each line
-    const buildPath = (ticker) => {
-        let d = "";
-        data.forEach((row, i) => {
-            const v = row[ticker];
-            if (v === undefined || v === null) return;
-            const x = xScale(i);
-            const y = yScale(v);
-            d += d === "" ? `M ${x} ${y}` : ` L ${x} ${y}`;
-        });
-        return d;
-    };
+    /*
+    |--------------------------------------------------------------------------
+    | Build Path
+    |--------------------------------------------------------------------------
+    */
 
-    // Mouse move handler
-    const handleMouseMove = (e) => {
-        const svg = svgRef.current;
-        if (!svg) return;
-        const rect = svg.getBoundingClientRect();
-        const mx = (e.clientX - rect.left) * (W / rect.width);
-        const relX = mx - PAD.left;
-        const idx = Math.round((relX / chartW) * (data.length - 1));
-        const clamped = Math.max(0, Math.min(data.length - 1, idx));
-        setHoveredX(clamped);
-        setTooltipData(data[clamped]);
-    };
+    function buildPath(ticker) {
+        const points = [];
 
-    const hx = hoveredX !== null ? xScale(hoveredX) : null;
+        data.forEach(
+            (row, index) => {
+                const value =
+                    row[ticker];
+
+                if (
+                    value === null ||
+                    value === undefined ||
+                    !Number.isFinite(
+                        Number(value)
+                    )
+                ) {
+                    return;
+                }
+
+                points.push({
+                    x: getX(index),
+                    y: getY(
+                        Number(value)
+                    ),
+                });
+            }
+        );
+
+        if (points.length === 0) {
+            return "";
+        }
+
+        return points
+            .map(
+                (point, index) =>
+                    `${index === 0
+                        ? "M"
+                        : "L"
+                    } ${point.x} ${point.y}`
+            )
+            .join(" ");
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Y Axis Ticks
+    |--------------------------------------------------------------------------
+    */
+
+    const tickCount = 6;
+
+    const yTicks =
+        Array.from(
+            {
+                length: tickCount,
+            },
+            (_, index) =>
+                minValue +
+                ((maxValue -
+                    minValue) /
+                    (tickCount - 1)) *
+                index
+        );
+
+    /*
+    |--------------------------------------------------------------------------
+    | X Axis Ticks
+    |--------------------------------------------------------------------------
+    */
+
+    const xTickCount =
+        Math.min(
+            7,
+            data.length
+        );
+
+    const xTicks =
+        Array.from(
+            {
+                length:
+                    xTickCount,
+            },
+            (_, index) => {
+                if (
+                    xTickCount ===
+                    1
+                ) {
+                    return 0;
+                }
+
+                return Math.round(
+                    (index /
+                        (xTickCount -
+                            1)) *
+                    (data.length -
+                        1)
+                );
+            }
+        );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mouse Move
+    |--------------------------------------------------------------------------
+    */
+
+    function handleMouseMove(
+        event
+    ) {
+        const rect =
+            event.currentTarget.getBoundingClientRect();
+
+        const mouseX =
+            event.clientX -
+            rect.left;
+
+        const relativeX =
+            mouseX -
+            margin.left;
+
+        const ratio =
+            relativeX /
+            chartWidth;
+
+        let index = Math.round(
+            ratio *
+            (data.length - 1)
+        );
+
+        index = Math.max(
+            0,
+            Math.min(
+                data.length - 1,
+                index
+            )
+        );
+
+        setHovered(index);
+    }
+
+    function handleMouseLeave() {
+        setHovered(null);
+    }
+
+    const hoveredRow =
+        hovered !== null
+            ? data[hovered]
+            : null;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Render
+    |--------------------------------------------------------------------------
+    */
 
     return (
-        <div className="flex-1 relative" style={{ minHeight: 0 }}>
+        <div
+            ref={containerRef}
+            className="relative h-full w-full"
+        >
             <svg
-                ref={svgRef}
-                viewBox={`0 0 ${W} ${H}`}
-                className="w-full h-full"
-                onMouseMove={handleMouseMove}
-                onMouseLeave={() => { setHoveredX(null); setTooltipData(null); }}
+                width="100%"
+                height="100%"
+                onMouseMove={
+                    handleMouseMove
+                }
+                onMouseLeave={
+                    handleMouseLeave
+                }
+                className="select-none"
             >
-                {/* Grid lines */}
-                {yTicks.map(v => (
-                    <line key={v}
-                        x1={PAD.left} y1={yScale(v)}
-                        x2={W - PAD.right} y2={yScale(v)}
-                        stroke="#e5e7eb" strokeWidth="0.5" />
-                ))}
+                {/* Y Grid */}
+                {yTicks.map(
+                    (tick, index) => {
+                        const y =
+                            getY(tick);
 
-                {/* Zero line */}
-                {minV < 0 && maxV > 0 && (
-                    <line
-                        x1={PAD.left} y1={yScale(0)}
-                        x2={W - PAD.right} y2={yScale(0)}
-                        stroke="#9ca3af" strokeWidth="1" strokeDasharray="4 3" />
+                        return (
+                            <g
+                                key={`y-${index}`}
+                            >
+                                <line
+                                    x1={
+                                        margin.left
+                                    }
+                                    y1={y}
+                                    x2={
+                                        width -
+                                        margin.right
+                                    }
+                                    y2={y}
+                                    stroke="currentColor"
+                                    className="text-zinc-200 dark:text-zinc-800"
+                                    strokeDasharray="4 4"
+                                />
+
+                                <text
+                                    x={
+                                        margin.left -
+                                        10
+                                    }
+                                    y={
+                                        y +
+                                        4
+                                    }
+                                    textAnchor="end"
+                                    className="fill-zinc-500 text-[11px]"
+                                >
+                                    {formatNumber(
+                                        tick
+                                    )}
+                                </text>
+                            </g>
+                        );
+                    }
                 )}
 
-                {/* Y axis labels */}
-                {yTicks.map(v => (
-                    <text key={v}
-                        x={PAD.left - 6} y={yScale(v) + 4}
-                        textAnchor="end" fontSize="10" fill="#9ca3af">
-                        {v >= 0 ? "+" : ""}{v}%
-                    </text>
-                ))}
+                {/* X Labels */}
+                {xTicks.map(
+                    (index) => {
+                        const x =
+                            getX(index);
 
-                {/* X axis labels */}
-                {xTickIdxs.map(i => (
-                    <text key={i}
-                        x={xScale(i)} y={H - 6}
-                        textAnchor="middle" fontSize="10" fill="#9ca3af">
-                        {data[i]?.date?.slice(5)}
-                    </text>
-                ))}
+                        const date =
+                            data[index]
+                                ?.date;
+
+                        return (
+                            <text
+                                key={`x-${index}`}
+                                x={x}
+                                y={
+                                    height -
+                                    15
+                                }
+                                textAnchor="middle"
+                                className="fill-zinc-500 text-[11px]"
+                            >
+                                {formatDate(
+                                    date
+                                )}
+                            </text>
+                        );
+                    }
+                )}
 
                 {/* Lines */}
-                {lines.map((ticker, i) => (
-                    <path key={ticker}
-                        d={buildPath(ticker)}
-                        fill="none"
-                        stroke={colors[i % colors.length]}
-                        strokeWidth={ticker === "^NSEI" ? 2.5 : 1.5}
-                        strokeLinejoin="round"
-                        strokeLinecap="round"
-                        opacity={hoveredX !== null ? (tooltipData?.[ticker] !== undefined ? 1 : 0.3) : 1}
-                    />
-                ))}
+                {series.map(
+                    (item) => (
+                        <path
+                            key={
+                                item.ticker
+                            }
+                            d={buildPath(
+                                item.ticker
+                            )}
+                            fill="none"
+                            stroke={
+                                item.color
+                            }
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+                    )
+                )}
 
-                {/* Hover crosshair */}
-                {hx !== null && (
+                {/* Hover Crosshair */}
+                {hovered !== null && (
                     <>
-                        <line x1={hx} y1={PAD.top} x2={hx} y2={H - PAD.bottom}
-                            stroke="#6b7280" strokeWidth="1" strokeDasharray="3 3" />
-                        {lines.map((ticker, i) => {
-                            const v = tooltipData?.[ticker];
-                            if (v === undefined || v === null) return null;
-                            return (
-                                <circle key={ticker}
-                                    cx={hx} cy={yScale(v)} r="4"
-                                    fill={colors[i % colors.length]}
-                                    stroke="#fff" strokeWidth="1.5" />
-                            );
-                        })}
+                        <line
+                            x1={getX(
+                                hovered
+                            )}
+                            y1={
+                                margin.top
+                            }
+                            x2={getX(
+                                hovered
+                            )}
+                            y2={
+                                height -
+                                margin.bottom
+                            }
+                            stroke="currentColor"
+                            className="text-zinc-400"
+                            strokeDasharray="4 4"
+                        />
+
+                        {series.map(
+                            (
+                                item
+                            ) => {
+                                const value =
+                                    data[
+                                    hovered
+                                    ]?.[
+                                    item
+                                        .ticker
+                                    ];
+
+                                if (
+                                    value ===
+                                    null ||
+                                    value ===
+                                    undefined
+                                ) {
+                                    return null;
+                                }
+
+                                return (
+                                    <circle
+                                        key={
+                                            item.ticker
+                                        }
+                                        cx={getX(
+                                            hovered
+                                        )}
+                                        cy={getY(
+                                            Number(
+                                                value
+                                            )
+                                        )}
+                                        r="4"
+                                        fill={
+                                            item.color
+                                        }
+                                        stroke="white"
+                                        strokeWidth="2"
+                                    />
+                                );
+                            }
+                        )}
                     </>
                 )}
             </svg>
 
             {/* Tooltip */}
-            {tooltipData && hoveredX !== null && (
-                <div className="absolute top-2 right-2 bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-xs min-w-[160px]">
-                    <p className="font-semibold text-gray-700 mb-1.5 border-b border-gray-100 pb-1">
-                        {tooltipData.date}
-                    </p>
-                    {lines.map((ticker, i) => {
-                        const v = tooltipData[ticker];
-                        if (v === undefined || v === null) return null;
-                        return (
-                            <div key={ticker} className="flex items-center justify-between gap-3 py-0.5">
-                                <div className="flex items-center gap-1.5">
-                                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                                        style={{ background: colors[i % colors.length] }} />
-                                    <span className="text-gray-600 truncate max-w-[90px]">{getLabel(ticker)}</span>
-                                </div>
-                                <span className={`font-bold ${v >= 0 ? "text-green-600" : "text-red-500"}`}>
-                                    {v >= 0 ? "+" : ""}{v}%
-                                </span>
-                            </div>
-                        );
-                    })}
-                </div>
+            {hoveredRow && (
+                <ChartTooltip
+                    row={hoveredRow}
+                    series={series}
+                    getSeriesData={
+                        getSeriesData
+                    }
+                    width={width}
+                    height={height}
+                    x={getX(hovered)}
+                />
             )}
         </div>
     );
 }
 
+/*
+|--------------------------------------------------------------------------
+| Chart Tooltip
+|--------------------------------------------------------------------------
+*/
+
+function ChartTooltip({
+    row,
+    series,
+    getSeriesData,
+    width,
+    height,
+    x,
+}) {
+    const tooltipWidth = 280;
+
+    let left = x + 15;
+
+    if (
+        left + tooltipWidth >
+        width
+    ) {
+        left =
+            x -
+            tooltipWidth -
+            15;
+    }
+
+    left = Math.max(
+        5,
+        left
+    );
+
+    const top =
+        height > 500
+            ? 20
+            : 10;
+
+    return (
+        <div
+            className="pointer-events-none absolute z-20 w-70 rounded-lg border border-zinc-200 bg-white p-3 text-xs shadow-xl"
+            style={{
+                left,
+                top,
+            }}
+        >
+            {/* Date */}
+            <div className="mb-3 border-b border-zinc-200 pb-2 font-semibold dark:border-zinc-700">
+                {formatFullDate(
+                    row.date
+                )}
+            </div>
+
+            <div className="space-y-3">
+                {series.map(
+                    (item) => {
+                        const raw =
+                            getSeriesData(
+                                item.ticker,
+                                row.date
+                            );
+
+                        if (!raw) {
+                            return (
+                                <div
+                                    key={
+                                        item.ticker
+                                    }
+                                    className="text-zinc-400"
+                                >
+                                    {
+                                        item.label
+                                    }
+                                    : No data
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <div
+                                key={
+                                    item.ticker
+                                }
+                            >
+                                {/* Index Name */}
+                                <div className="mb-1 flex items-center gap-2">
+                                    <span
+                                        className="h-2 w-2 rounded-full"
+                                        style={{
+                                            backgroundColor:
+                                                item.color,
+                                        }}
+                                    />
+
+                                    <span className="font-medium">
+                                        {
+                                            item.label
+                                        }
+                                    </span>
+                                </div>
+
+                                {/* Close */}
+                                <div className="mb-2 text-sm font-semibold">
+                                    Close:{" "}
+                                    {formatNumber(
+                                        raw.close
+                                    )}
+                                </div>
+
+                                {/* OHLC */}
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-base">
+                                    <span className="font-medium text-zinc-500">
+                                        Open
+                                    </span>
+
+                                    <span className="text-right font-semibold text-black">
+                                        {formatNumber(raw.open)}
+                                    </span>
+
+                                    <span className="font-medium text-zinc-500">
+                                        High
+                                    </span>
+
+                                    <span className="text-right font-semibold text-black">
+                                        {formatNumber(raw.high)}
+                                    </span>
+
+                                    <span className="font-medium text-zinc-500">
+                                        Low
+                                    </span>
+
+                                    <span className="text-right font-semibold text-black">
+                                        {formatNumber(raw.low)}
+                                    </span>
+
+                                    <span className="font-medium text-zinc-500">
+                                        Close
+                                    </span>
+
+                                    <span className="text-right font-semibold text-black">
+                                        {formatNumber(raw.close)}
+                                    </span>
+
+                                    <span className="font-medium text-zinc-500">
+                                        Shares
+                                    </span>
+
+                                    <span className="text-right font-semibold text-black">
+                                        {formatNumber(raw.sharesTraded)}
+                                    </span>
+
+                                    <span className="font-medium text-zinc-500">
+                                        Turnover
+                                    </span>
+
+                                    <span className="text-right font-semibold text-black">
+                                        {formatNumber(raw.turnover)}
+                                    </span>
+                                </div>
+                            </div>
+                        );
+                    }
+                )}
+            </div>
+        </div>
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Formatting
+|--------------------------------------------------------------------------
+*/
+
+function formatNumber(value) {
+    if (
+        value === null ||
+        value === undefined ||
+        Number.isNaN(Number(value))
+    ) {
+        return "—";
+    }
+
+    return Number(value).toLocaleString(
+        "en-IN",
+        {
+            maximumFractionDigits: 2,
+        }
+    );
+}
+
+function formatDate(date) {
+    if (!date) {
+        return "";
+    }
+
+    const parsed =
+        new Date(date);
+
+    if (
+        Number.isNaN(
+            parsed.getTime()
+        )
+    ) {
+        return date;
+    }
+
+    return parsed.toLocaleDateString(
+        "en-IN",
+        {
+            month: "short",
+            year: "2-digit",
+        }
+    );
+}
+
+function formatFullDate(date) {
+    if (!date) {
+        return "";
+    }
+
+    const parsed =
+        new Date(date);
+
+    if (
+        Number.isNaN(
+            parsed.getTime()
+        )
+    ) {
+        return date;
+    }
+
+    return parsed.toLocaleDateString(
+        "en-IN",
+        {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+        }
+    );
+}
 
 // ---- Option Chain ------------------------------------------------------------
 
@@ -1087,37 +2267,39 @@ function OptionChain({ onClose }) {
     const [error, setError] = useState(null);
     const [spotPrice, setSpotPrice] = useState(null);
     const [filter, setFilter] = useState(10); // show ±10 strikes from ATM
-    const [expiryTimestamps, setExpiryTimestamps] = useState([]);
+    //  const [expiryTimestamps, setExpiryTimestamps] = useState([]);
+    const [source, setSource] = useState("auto"); // "auto" | "nse" | "yahoo"
+    const [expiryDatesRaw, setExpiryDatesRaw] = useState([]);  // ← add here
 
     const fetchData = async (sym, selectedExpiry = "") => {
         setLoading(true);
         setError(null);
         try {
-            // Find timestamp for selected expiry
-            const ts = expiryTimestamps.find((t) => {
-                const label = new Date(t * 1000).toLocaleDateString("en-IN", {
+            // selectedExpiry is "28 Aug 2026" format
+            // find matching raw date "2026-08-28"
+            const rawDate = expiryDatesRaw.find((raw) => {
+                const fmt = new Date(raw).toLocaleDateString("en-IN", {
                     day: "2-digit", month: "short", year: "numeric"
                 });
-                return label === selectedExpiry;
-            });
+                return fmt === selectedExpiry;
+            }) ?? "";
 
-            const url = `/api/options?symbol=${sym}${ts ? `&date=${ts}` : ""}`;
+            const url = `/api/options?symbol=${sym}${rawDate ? `&date=${rawDate}` : ""}`;
             const res = await fetch(url);
             const json = await res.json();
 
             if (json.error) {
-                setError(json.message ?? "Failed to fetch option chain.");
+                setError(json.message ?? "Failed to fetch");
                 setLoading(false);
                 return;
             }
 
             const records = json?.records;
             setSpotPrice(records?.underlyingValue ?? null);
-            setExpiryTimestamps(records?.expirationTimestamps ?? []);
+            setExpiryDatesRaw(records?.expiryDatesRaw ?? []);
 
             const expiries = records?.expiryDates ?? [];
-            const activeExp = selectedExpiry || expiries[0] || "";
-            setExpiry(activeExp);
+            setExpiry(selectedExpiry || expiries[0] || "");
             setData(json);
         } catch (e) {
             setError("Network error: " + e.message);
@@ -1180,6 +2362,22 @@ function OptionChain({ onClose }) {
                             ))}
                         </div>
 
+                        {/* Source toggle */}
+                        <div className="flex rounded-md overflow-hidden border border-gray-300 text-xs font-medium">
+                            {["auto", "yahoo", "nse"].map(s => (
+                                <button
+                                    key={s}
+                                    onClick={() => setSource(s)}
+                                    className={`px-2.5 py-1.5 uppercase transition-colors ${source === s
+                                        ? "bg-gray-800 text-white"
+                                        : "bg-white text-gray-600 hover:bg-gray-50"
+                                        }`}
+                                >
+                                    {s === "nse" ? "🇮🇳 NSE" : s === "yahoo" ? "📈 Yahoo" : "⚡ Auto"}
+                                </button>
+                            ))}
+                        </div>
+
                         {/* Expiry selector */}
                         {expiries.length > 0 && (
                             <select
@@ -1237,26 +2435,26 @@ function OptionChain({ onClose }) {
                         <table className="w-full text-xs border-collapse">
                             <thead className="sticky top-0 z-10">
                                 <tr>
-                                    {/* CE headers */}
-                                    <th className="bg-green-50 text-green-700 px-2 py-2 text-right font-semibold border-b border-green-100">OI</th>
-                                    <th className="bg-green-50 text-green-700 px-2 py-2 text-right font-semibold border-b border-green-100">Chg OI</th>
-                                    <th className="bg-green-50 text-green-700 px-2 py-2 text-right font-semibold border-b border-green-100">Volume</th>
-                                    <th className="bg-green-50 text-green-700 px-2 py-2 text-right font-semibold border-b border-green-100">IV</th>
-                                    <th className="bg-green-50 text-green-700 px-2 py-2 text-right font-semibold border-b border-green-100">LTP</th>
-                                    <th className="bg-green-50 text-green-700 px-2 py-2 text-right font-semibold border-b border-green-100">Chg</th>
-                                    <th className="bg-green-50 text-green-700 px-2 py-2 text-right font-semibold border-b border-green-100">Bid</th>
-                                    <th className="bg-green-50 text-green-700 px-2 py-2 text-center font-bold border-b border-green-100 text-green-800">CALLS</th>
-                                    {/* Strike */}
+                                    <th colSpan={7} className="bg-green-100 text-green-800 px-2 py-2 text-center font-bold border-b border-green-200">CALLS</th>
                                     <th className="bg-gray-800 text-white px-3 py-2 text-center font-bold border-b border-gray-700 min-w-[80px]">STRIKE</th>
-                                    {/* PE headers */}
-                                    <th className="bg-red-50 text-red-700 px-2 py-2 text-center font-bold border-b border-red-100 text-red-800">PUTS</th>
-                                    <th className="bg-red-50 text-red-700 px-2 py-2 text-left font-semibold border-b border-red-100">Ask</th>
-                                    <th className="bg-red-50 text-red-700 px-2 py-2 text-left font-semibold border-b border-red-100">Chg</th>
-                                    <th className="bg-red-50 text-red-700 px-2 py-2 text-left font-semibold border-b border-red-100">LTP</th>
-                                    <th className="bg-red-50 text-red-700 px-2 py-2 text-left font-semibold border-b border-red-100">IV</th>
-                                    <th className="bg-red-50 text-red-700 px-2 py-2 text-left font-semibold border-b border-red-100">Volume</th>
-                                    <th className="bg-red-50 text-red-700 px-2 py-2 text-left font-semibold border-b border-red-100">Chg OI</th>
-                                    <th className="bg-red-50 text-red-700 px-2 py-2 text-left font-semibold border-b border-red-100">OI</th>
+                                    <th colSpan={7} className="bg-red-100 text-red-800 px-2 py-2 text-center font-bold border-b border-red-200">PUTS</th>
+                                </tr>
+                                <tr>
+                                    <th className="bg-green-50 text-green-700 px-2 py-1.5 text-right text-xs font-semibold border-b border-green-100">OI</th>
+                                    <th className="bg-green-50 text-green-700 px-2 py-1.5 text-right text-xs font-semibold border-b border-green-100">Chg OI</th>
+                                    <th className="bg-green-50 text-green-700 px-2 py-1.5 text-right text-xs font-semibold border-b border-green-100">Vol</th>
+                                    <th className="bg-green-50 text-green-700 px-2 py-1.5 text-right text-xs font-semibold border-b border-green-100">IV</th>
+                                    <th className="bg-green-50 text-green-700 px-2 py-1.5 text-right text-xs font-semibold border-b border-green-100">LTP</th>
+                                    <th className="bg-green-50 text-green-700 px-2 py-1.5 text-right text-xs font-semibold border-b border-green-100">Chg</th>
+                                    <th className="bg-green-50 text-green-700 px-2 py-1.5 text-right text-xs font-semibold border-b border-green-100">Bid</th>
+                                    <th className="bg-gray-800 text-white px-3 py-1.5 text-center text-xs font-bold border-b border-gray-700"></th>
+                                    <th className="bg-red-50 text-red-700 px-2 py-1.5 text-left text-xs font-semibold border-b border-red-100">Ask</th>
+                                    <th className="bg-red-50 text-red-700 px-2 py-1.5 text-left text-xs font-semibold border-b border-red-100">Chg</th>
+                                    <th className="bg-red-50 text-red-700 px-2 py-1.5 text-left text-xs font-semibold border-b border-red-100">LTP</th>
+                                    <th className="bg-red-50 text-red-700 px-2 py-1.5 text-left text-xs font-semibold border-b border-red-100">IV</th>
+                                    <th className="bg-red-50 text-red-700 px-2 py-1.5 text-left text-xs font-semibold border-b border-red-100">Vol</th>
+                                    <th className="bg-red-50 text-red-700 px-2 py-1.5 text-left text-xs font-semibold border-b border-red-100">Chg OI</th>
+                                    <th className="bg-red-50 text-red-700 px-2 py-1.5 text-left text-xs font-semibold border-b border-red-100">OI</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1290,36 +2488,26 @@ function OptionChain({ onClose }) {
                                             </td>
                                             <td className={`px-2 py-1.5 text-right text-gray-600 ${isITM_CE ? "bg-green-50" : ""}`}>{fmt(ce?.totalTradedVolume)}</td>
                                             <td className={`px-2 py-1.5 text-right text-gray-600 ${isITM_CE ? "bg-green-50" : ""}`}>{ce?.impliedVolatility?.toFixed(1) ?? "-"}</td>
-                                            <td className={`px-2 py-1.5 text-right font-semibold ${isITM_CE ? "bg-green-50" : ""}`}>
-                                                {ce?.lastPrice?.toFixed(2) ?? "-"}
-                                            </td>
+                                            <td className={`px-2 py-1.5 text-right font-semibold ${isITM_CE ? "bg-green-50" : ""}`}>{ce?.lastPrice?.toFixed(2) ?? "-"}</td>
                                             <td className={`px-2 py-1.5 text-right ${isITM_CE ? "bg-green-50" : ""}`}>
                                                 <span className={ce?.change > 0 ? "text-green-600" : ce?.change < 0 ? "text-red-500" : "text-gray-500"}>
                                                     {fmtChg(ce?.change)}
                                                 </span>
                                             </td>
                                             <td className={`px-2 py-1.5 text-right text-gray-500 ${isITM_CE ? "bg-green-50" : ""}`}>{ce?.bidprice?.toFixed(2) ?? "-"}</td>
-                                            <td className={`px-2 py-1.5 ${isITM_CE ? "bg-green-50" : ""}`} /> {/* spacer */}
-
                                             {/* Strike */}
                                             <td className={`px-3 py-1.5 text-center font-bold text-sm ${isATM
                                                 ? "bg-yellow-400 text-yellow-900"
                                                 : "bg-gray-800 text-white"
-                                                }`}>
-                                                {strike.toLocaleString("en-IN")}
-                                            </td>
-
+                                                }`}>{strike.toLocaleString("en-IN")}</td>
                                             {/* PE side */}
-                                            <td className={`px-2 py-1.5 ${isITM_PE ? "bg-red-50" : ""}`} /> {/* spacer */}
-                                            <td className={`px-2 py-1.5 text-left text-gray-500 ${isITM_PE ? "bg-red-50" : ""}`}>{pe?.askPrice?.toFixed(2) ?? "-"}</td>
-                                            <td className={`px-2 py-1.5 text-left ${isITM_PE ? "bg-red-50" : ""}`}>
+                                           // <td className={`px-2 py-1.5 text-left text-gray-500 ${isITM_PE ? "bg-red-50" : ""}`}>{pe?.bidprice?.toFixed(2) ?? "-"}</td>
+                                           // <td className={`px-2 py-1.5 text-left ${isITM_PE ? "bg-red-50" : ""}`}>
                                                 <span className={pe?.change > 0 ? "text-green-600" : pe?.change < 0 ? "text-red-500" : "text-gray-500"}>
                                                     {fmtChg(pe?.change)}
                                                 </span>
                                             </td>
-                                            <td className={`px-2 py-1.5 text-left font-semibold ${isITM_PE ? "bg-red-50" : ""}`}>
-                                                {pe?.lastPrice?.toFixed(2) ?? "-"}
-                                            </td>
+                                            <td className={`px-2 py-1.5 text-left font-semibold ${isITM_PE ? "bg-red-50" : ""}`}>{pe?.lastPrice?.toFixed(2) ?? "-"}</td>
                                             <td className={`px-2 py-1.5 text-left text-gray-600 ${isITM_PE ? "bg-red-50" : ""}`}>{pe?.impliedVolatility?.toFixed(1) ?? "-"}</td>
                                             <td className={`px-2 py-1.5 text-left text-gray-600 ${isITM_PE ? "bg-red-50" : ""}`}>{fmt(pe?.totalTradedVolume)}</td>
                                             <td className={`px-2 py-1.5 text-left ${isITM_PE ? "bg-red-50" : ""}`}>
@@ -1402,6 +2590,10 @@ export default function Dashboard() {
     const updateTimers = useRef({});
     const [showCompare, setShowCompare] = useState(false);
     const [showOptions, setShowOptions] = useState(false);
+    const commodityBtnRef = useRef(null);
+    const indicesBtnRef = useRef(null);
+    const [commodityPos, setCommodityPos] = useState({ top: 0, left: 0 });
+    const [indicesPos, setIndicesPos] = useState({ top: 0, left: 0 });
 
     // ── Drag state ────────────────────────────────────────────────────────────
     const dragIdx = useRef(null);       // index being dragged
@@ -1587,15 +2779,26 @@ export default function Dashboard() {
                 {/* Commodities dropdown */}
                 <div className="relative flex-shrink-0">
                     <button
-                        onClick={() => { setCommodityOpen(v => !v); setIndicesOpen(false); setShowCompare(false); }}
+                        ref={commodityBtnRef}
+                        onClick={() => {
+                            if (commodityBtnRef.current) {
+                                const r = commodityBtnRef.current.getBoundingClientRect();
+                                setCommodityPos({ top: r.bottom + 4, left: r.left });
+                            }
+                            setCommodityOpen(v => !v);
+                            setIndicesOpen(false);
+                        }}
                         className="whitespace-nowrap rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-700 hover:bg-amber-100 flex items-center gap-1"
                     >
                         Commodities <span className="text-[10px]">{commodityOpen ? "▲" : "▼"}</span>
                     </button>
                     {commodityOpen && (
                         <>
-                            <div className="fixed inset-0 z-10" onClick={() => setCommodityOpen(false)} />
-                            <div className="absolute top-full left-0 z-20 mt-1 w-48 rounded-md border border-gray-200 bg-white shadow-lg py-1">
+                            <div className="fixed inset-0 z-40" onClick={() => setCommodityOpen(false)} />
+                            <div
+                                className="fixed z-50 w-48 rounded-md border border-gray-200 bg-white shadow-lg py-1"
+                                style={{ top: commodityPos.top, left: commodityPos.left }}
+                            >
                                 {COMMODITY_PRESETS.map((c) => (
                                     <button
                                         key={c.value}
@@ -1613,15 +2816,26 @@ export default function Dashboard() {
                 {/* Indices dropdown */}
                 <div className="relative flex-shrink-0">
                     <button
-                        onClick={() => { setIndicesOpen(v => !v); setCommodityOpen(false); setShowCompare(false); }}
+                        ref={indicesBtnRef}
+                        onClick={() => {
+                            if (indicesBtnRef.current) {
+                                const r = indicesBtnRef.current.getBoundingClientRect();
+                                setIndicesPos({ top: r.bottom + 4, left: r.left });
+                            }
+                            setIndicesOpen(v => !v);
+                            setCommodityOpen(false);
+                        }}
                         className="whitespace-nowrap rounded-md border border-blue-300 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 flex items-center gap-1"
                     >
                         Indices <span className="text-[10px]">{indicesOpen ? "▲" : "▼"}</span>
                     </button>
                     {indicesOpen && (
                         <>
-                            <div className="fixed inset-0 z-10" onClick={() => setIndicesOpen(false)} />
-                            <div className="absolute top-full left-0 z-20 mt-1 w-52 rounded-md border border-gray-200 bg-white shadow-lg py-1 max-h-80 overflow-y-auto">
+                            <div className="fixed inset-0 z-40" onClick={() => setIndicesOpen(false)} />
+                            <div
+                                className="fixed z-50 w-52 rounded-md border border-gray-200 bg-white shadow-lg py-1 max-h-80 overflow-y-auto"
+                                style={{ top: indicesPos.top, left: indicesPos.left }}
+                            >
                                 {INDEX_GROUPS.map((group) => (
                                     <div key={group.label}>
                                         <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
@@ -1653,14 +2867,14 @@ export default function Dashboard() {
                     📊 Compare
                 </button>
 
-                {/* Option Chain button */}
+                {/* Option Chain button 
                 <button
                     onClick={() => setShowOptions(true)}
                     className="flex-shrink-0 whitespace-nowrap rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-100 flex items-center gap-1"
                 >
                     📋 Options
                 </button>
-
+*/}
             </div>
 
             {/* Compare chart modal */}
