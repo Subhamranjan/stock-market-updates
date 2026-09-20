@@ -13,8 +13,7 @@ A real-time stock market dashboard built with Next.js, PostgreSQL, and Python.
 - Commodity prices (Gold, Silver, Crude Oil, etc.)
 - Global market clocks with open/close countdown
 - Drag and drop card reordering
-- Dark / Light mode
-- Data persisted in PostgreSQL
+- data stored in postgresql
 
 ---
 
@@ -30,33 +29,32 @@ A real-time stock market dashboard built with Next.js, PostgreSQL, and Python.
 | Charts      | Custom SVG (no library)           |
 
 ---
-
 ## 📁 Project Structure
-
+```
 stock_data/
 ├── src/
-│ ├── app/
-│ │ ├── page.js # Main dashboard
-│ │ ├── actions.ts # Server actions (getQuote, getHistory)
-│ │ ├── globals.css
-│ │ ├── layout.js
-│ │ └── api/
-│ │ ├── watchlist/
-│ │ │ ├── route.ts # GET, POST watchlist
-│ │ │ └── [id]/
-│ │ │ └── route.ts # PUT, DELETE watchlist item
-│ │ ├── clocks/
-│ │ │ └── route.ts # GET, PUT market clocks
-│ │ ├── options/
-│ │ │ └── route.ts # GET option chain (proxy to Python)
-│ │ └── index-history/
-│ │ └── route.ts # GET index history from PostgreSQL
-│ └── lib/
-│ └── db.ts # PostgreSQL connection pool
-├── src/app/option_server.py # Python FastAPI for option chain
-├── .env.local # Environment variables
+│   ├── app/
+│   │   ├── page.js                 # Main dashboard
+│   │   ├── actions.ts              # Server actions (getQuote, getHistory)
+│   │   ├── globals.css
+│   │   ├── layout.js
+│   │   ├── option_server.py        # Python FastAPI for option chain
+│   │   └── api/
+│   │       ├── watchlist/
+│   │       │   ├── route.ts        # GET, POST watchlist
+│   │       │   └── [id]/
+│   │       │       └── route.ts    # PUT, DELETE watchlist item
+│   │       ├── clocks/
+│   │       │   └── route.ts        # GET, PUT market clocks
+│   │       ├── options/
+│   │       │   └── route.ts        # GET option chain (proxy to Python)
+│   │       └── index-history/
+│   │           └── route.ts        # GET index history from PostgreSQL
+│   └── lib/
+│       └── db.ts                   # PostgreSQL connection pool
+├── .env.local                      # Environment variables
 └── README.md
-
+```
 
 ---
 
